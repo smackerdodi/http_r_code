@@ -1,0 +1,3 @@
+sys
+colorama
+requests
