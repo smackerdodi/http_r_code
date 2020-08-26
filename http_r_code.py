@@ -1,35 +1,46 @@
-import sys
-import colorama
+import concurrent.futures
 import requests
+import threading
+import sys
+import time
 from colorama import Fore, Style
-from requests.exceptions import ConnectionError
-sublist=sys.argv[1]
-outlist=sys.argv[2]
-redlist=sys.argv[3]
-deniedlist=sys.argv[4]
-subfile=open(sublist, "r")
-outfile=open(outlist, "a")
-redfile=open(redlist, "a")
-deniedfile=open(deniedlist, "a")
-for sub in subfile:
-	try:
-		subd=sub.strip()
-		subd2="http://" + subd		
-		res = requests.head(subd2, timeout=1)
+inputfile=sys.argv[1]
+outputfile=sys.argv[2]
+output=open(outputfile, "a")
+with open(inputfile, "r") as f:
+	inputurl = [line.rstrip() for line in f]
+threadLocal = threading.local()
+count = len(inputurl)
+print("number of urls = " + str(count))
+def get_session():
+    if not hasattr(threadLocal, "session"):
+        threadLocal.session = requests.Session()
+    return threadLocal.session
+def check_sub(url):
+	try :
+		session=get_session()
+		res=session.get(url, timeout=1, allow_redirects=False)
 		if str(res.status_code)[0] == "3":
-			res3=subd2 + " : " + str(res.status_code) + " >> " + res.headers['location']
-			redfile.write(res3 +"\n")
-			print(Style.BRIGHT + Fore.WHITE + (subd2) + " : " + Fore.BLUE + str(res.status_code) + Fore.GREEN + " >> " + Fore.YELLOW + (res.headers['location']))
+			res3=url + " : " + str(res.status_code) + " >> " + res.headers['location']
+			print(Style.BRIGHT + Fore.WHITE + (url)+ " : " + Fore.BLUE + str(res.status_code) + Fore.GREEN + " >> " + Fore.YELLOW + (res.headers['location']))
+			output.write(res3 +"\n")
 		elif str(res.status_code)[0] == "2":
-			print(Style.BRIGHT + Fore.WHITE + (subd2) + " : " + Fore.GREEN + str(res.status_code))
-			res2=subd2 + " : " + str(res.status_code)
-			outfile.write(res2 +"\n") 
-		elif str(res.status_code)[0] == "4":
-			print(Style.BRIGHT + Fore.WHITE + (subd2) + " : " + Fore.RED + str(res.status_code))
-			res4=subd2 + " : " + str(res.status_code)
-			deniedfile.write(res4 +"\n") 
+			res2=url + " : " + str(res.status_code) 
+			print(Style.BRIGHT + Fore.WHITE + (url)+ " : " + Fore.GREEN + str(res.status_code))
+			output.write(res2 +"\n")
 		else :
-			print(Style.BRIGHT + Fore.WHITE + (subd2) + " : " + Fore.BLUE + str(res.status_code))
-	except :    
-   		print(Style.BRIGHT + Fore.WHITE + (subd2) + " : " + Fore.RED + (' Unreachable'))
-subfile.close()
+			res4=url + " : " + str(res.status_code)
+			print(Style.BRIGHT + Fore.WHITE + (url)+ " : " + Fore.RED + str(res.status_code))
+			output.write(res4 +"\n")
+	except:
+		print(Style.BRIGHT + Fore.WHITE + (url)+ " : " + Fore.RED+ " : is unreachable")
+def itterate_url(inputurl):
+	url="https://"+inputurl
+	check_sub(url)
+	
+if __name__ == "__main__":
+	start_time = time.time()
+	with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
+       		executor.map(itterate_url, inputurl)
+	duration = time.time() - start_time
+	print("finished in : " + str(duration) + "  sec")
