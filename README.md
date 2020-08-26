@@ -15,6 +15,9 @@ where:-
 2. response_code.txt file contain all subdomain have response code and you could filter it as shown above 
 ## Notes :-
 1.  tool must take the two files as arguements or it will not work ( the first must exist but the other if it is not exist the tool will create it )
+
 2. the output of the tool is coloures to make it easy for the eyes 
-3. if the subdomain has 3xx response code which mean redirect the tool print out the location header which is the subdomain redirect to 
+
+3. if the subdomain has 3xx response code which mean redirect the tool print out the location header which is the subdomain redirect to
+
 4- now the tool is multi-threaded which mean it is so fast and you could increase or decrease the speed of the tool in the source code at (max_workers=40) you could change this number up or down depending on your computer resources or internet speed 
